@@ -1536,162 +1536,87 @@
     </script>
   </head>
   <body>
-<h1>
-    <span onclick="Goto(RootPath);">OneList</span>
-</h1>
-<div class="list-wrapper">
-    <div class="list-container">
-        <div class="header-container">
-            <h3>OneList Local Path</h3>
-            <span id="back" class="icon-arrow-left2" onclick="Goto(Back());"></span>
-            <div class="search-container">
-                <input id="search" oninput="Search();" placeholder="Search" />
-            </div>
+    <template id="tree-node-wrapper-template">
+      <div class="tree-node-wrapper">
+        <div class="tree-node">
+          <ion-icon></ion-icon>
+          <ion-icon></ion-icon>
+          <div class="tree-node-name"></div>
         </div>
-        <div class="list-body-container">
-            <table class="list-table">
-                <tr class="list-title">
-                    <th onclick="View('name');">文件</th>
-                    <th onclick="View('date');">时间</th>
-                    <th onclick="View('size');">大小</th>
-                </tr>
-            </table>
+      </div>
+    </template>
+    <template id="file-wrapper-templete">
+      <div class="row file-wrapper">
+        <div class="file">
+          <ion-icon></ion-icon>
+          <span class="name"></span>
+          <span class="time"></span>
+          <span class="size"></span>
         </div>
+      </div>
+    </template>
+    <template id="loading-wrapper-templete">
+      <div class="sk-folding-cube">
+        <div class="sk-cube1 sk-cube"></div>
+        <div class="sk-cube2 sk-cube"></div>
+        <div class="sk-cube4 sk-cube"></div>
+        <div class="sk-cube3 sk-cube"></div>
+      </div>
+    </template>
+    <div class="loading-wrapper">
+      <div class="loading">Loading...</div>
     </div>
-</div>
-<script>
-    var RootPath = "{{.RootPath}}";
-    var CurrentPath = "{{.CurrentPath}}";
-    var RawData = "{{.RawData}}";
-    var Reverse = false;
-    var PageData = JSON.parse(window.atob(RawData));
-    var ArrayPath = new Array();
-    var ArrayFloder = new Array();
-    var ArrayFile = new Array();
-    if (CurrentPath === "/"){ CurrentPath = "" }
-    for(let item in PageData){
-        if (item.indexOf("@") == 0) { continue }
-        if (PageData[item]['@type'] == 'file') {
-            ArrayFile.push(PageData[item]);
-        } else if (PageData[item]['@type'] == 'folder') {
-            ArrayFloder.push(PageData[item]);
-        }
-    }
-    function Goto(thePath) {window.location.href = thePath;}
-    function SizeNum(Size) {
-        let dataArray = Size.split(" ", 2);
-        let dataNum = 0;
-        switch (dataArray[1]) {
-            case "B":
-                dataNum = Math.pow(2, 0) * dataArray[0];
-                break;
-            case "KB":
-                dataNum = Math.pow(2, 10) * dataArray[0];
-                break;
-            case "MB":
-                dataNum = Math.pow(2, 20) * dataArray[0];
-                break;
-            case "GB":
-                dataNum = Math.pow(2, 30) * dataArray[0];
-                break;
-            case "TB":
-                dataNum = Math.pow(2, 40) * dataArray[0];
-                break;
-            case "PB":
-                dataNum = Math.pow(2, 50) * dataArray[0];
-                break;
-            default:
-                dataNum = 0;
-        }
-        return dataNum;
-    }
-    function compare(property) {
-        if (property === "size") {
-            return function(a,b){
-                let value0 = SizeNum(a[property].toUpperCase());
-                let value1 = SizeNum(b[property].toUpperCase());
-                return value0 - value1;
-            }
-        } else {
-            return function(a,b){
-                let value0 = a[property].toLowerCase();
-                let value1 = b[property].toLowerCase();
-                return value0.localeCompare(value1);
-            }
-        }
-    }
-    function Clear() {
-        let ClassList = new Array("item");
-        for(let item in ClassList){
-            let Elem = document.getElementsByClassName(ClassList[item]);
-            for(let i = Elem.length-1; i >= 0 ; i--) {
-                Elem[i].parentNode.removeChild(Elem[i]);
-            }
-        }
-        let ElemH3 = document.getElementsByTagName("h3")[0];
-        let newH3 = document.createElement("h3");
-        let localPath = CurrentPath.trim().replace(/^\//, "").replace(/\/$/, "");
-        let localHtmlArray = new Array();
-        localHtmlArray.push("<a href='//" + window.location.host + RootPath + "'>" + '<span class="icon-home"></span>' + "</a>");
-        if (localPath !== "" ){
-            let localPathArray = localPath.split("/");
-            let localHref = "";
-            for(let j=0; j<localPathArray.length; j++){
-                localHref += "/" + localPathArray[j];
-                if (j === 0 && RootPath !== "/"){ continue }
-                localHtmlArray.push("<a href='//" + window.location.host + localHref + "'>" + localPathArray[j] + "</a>");
-            }
-        }
-        ElemH3.innerHTML = localHtmlArray.join(" / ");
-        ArrayPath = localHtmlArray;
-    }
-    function Back() {
-        let Num = ArrayPath.length - 1;
-        let ElemNum = 0;
-        let ElemBack = document.createElement("div");
-        if (Num > 0){ElemNum = Num - 1;}
-        ElemBack.innerHTML = ArrayPath[ElemNum];
-        return ElemBack.childNodes[0].href
-    }
-    function Search() {
-        let searchVal = document.getElementById("search").value;
-        if (searchVal === undefined){ return; } else { searchVal = searchVal.toString().toLowerCase(); }
-        let ShowArray = document.getElementsByClassName("item");
-        for(i=0; i<ShowArray.length; i++){
-            let FocusElem = ShowArray[i].children[0].getElementsByTagName("a");
-            if (FocusElem !== undefined && FocusElem.length === 1){
-                let newAttr = "table-row";
-                if (FocusElem[0].textContent.toLowerCase().indexOf(searchVal) < 0) { newAttr = "none"; }
-                ShowArray[i].style.display = newAttr;
-            }
-        }
-    }
-    function View(Property) {
-        ArrayFloder.sort(compare(Property));
-        ArrayFile.sort(compare(Property));
-        if (Reverse) {
-            ArrayFloder.reverse();
-            ArrayFile.reverse();
-        }
-        Reverse = !(Reverse);
-        Clear();
-        let Elem = document.getElementsByClassName("list-table")[0];
-        let ArrayItem = ArrayFloder.concat(ArrayFile);
-        for(let item in ArrayItem){
-            let newChild = document.createElement("tr");
-            let iconHtml = "";
-            if (ArrayItem[item]['@type'] == 'folder') {
-                iconHtml = '<span class="icon-folder-open"> </span>';
-            } else if (ArrayItem[item]['@type'] == 'file') {
-                iconHtml = '<span class="icon-file-text2"> </span>';
-            } else { continue }
-            newChild.setAttribute('class', 'item');
-            let ItemName = decodeURIComponent(ArrayItem[item]['name']);
-            newChild.innerHTML = "<td class=\"list-data\">" + iconHtml + "<a href='//" + window.location.host + CurrentPath + "/" + ItemName +"'>" + ItemName + "</a></td><td class=\"list-data\">" + ArrayItem[item]['date'] + "</td><td class=\"list-data\">" + ArrayItem[item]['size'] + "</td>";
-            Elem.lastChild.appendChild(newChild);
-        }
-    }
-    window.onload = View("name");
-</script>
-</body>
+    <div class="header-wrapper">
+      <div class="header">
+        <ion-icon id="arrow-back" class="logo" name="arrow-back"></ion-icon>
+        <ion-icon
+          id="arrow-forward"
+          class="logo"
+          name="arrow-forward"
+        ></ion-icon>
+        <ion-icon id="main-page" class="logo" name="folder"></ion-icon>
+        <div class="nav">
+          <span id="path"> </span>
+        </div>
+        <span class="site" id="nav-site">ONEDRIVE</span>
+      </div>
+    </div>
+    <div class="container">
+      <div class="main">
+        <div class="left">
+          <div id="tree-root"></div>
+        </div>
+        <div class="right">
+          <div class="list-header">
+            <div class="row">
+              <div class="file">
+                <span class="name">ITEMS</span>
+                <span class="time">TIME</span>
+                <span class="size">SIZE</span>
+              </div>
+            </div>
+          </div>
+          <div id="file-list"></div>
+          <div class="markdown-body">
+            <div id="readme"></div>
+          </div>
+          <div class="preview">
+            <div class="info">
+              <div class="file-name"></div>
+              <div class="btn download">下载</div>
+              <div class="btn quote">引用</div>
+              <div class="btn share">分享</div>
+            </div>
+            <div class="content"></div>
+          </div>
+          <div class="password-wrapper">
+            <div class="password">
+              <input type="password" />
+              <button>提交</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
